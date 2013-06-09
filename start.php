@@ -24,8 +24,28 @@ function jade_template_handler($view, $vars) {
 	$viewtype = elgg_get_viewtype();
 	$view_location = elgg_get_view_location($view);
 	$view_file = "$view_location$viewtype/$view.php";
+	
+	if (!file_exists($view_file)) {
+		$error = "$viewtype/$view view does not exist.";
+		elgg_log($error, 'NOTICE');
+		return;
+	}
+	
+	$cached_view_file = elgg_get_data_path() . "jade_cache/$viewtype/$view";
+	if (!is_dir(dirname($cached_view_file))) {
+		mkdir(dirname($cached_view_file), 0777, true);
+	}
+	file_put_contents($cached_view_file, $JADE->render($view_file, $vars));
 
-	return $JADE->render($view_file);
+	ob_start();
+	if (!include($cached_view_file)) {
+		$error = "$viewtype/$view view does not exist.";
+		elgg_log($error, 'NOTICE');
+		return;
+	}
+	$content = ob_get_clean();
+	
+	return $content;
 	
 }
 
